@@ -1,17 +1,21 @@
 package com.cun.appnotas.appnotas;
 
+import android.app.Dialog;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private ListView mListView;
@@ -75,6 +79,38 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });*/
+
+        //accion cuando seleccionamos un item de la lista
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            public void onItemClick(AdapterView<?> parent, View view, final int masterListPosition, long id) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                ListView modeListView = new ListView(MainActivity.this);
+                String[] modes = new String[] { "Editar Aviso", "Borrar Aviso" };
+                ArrayAdapter<String> modeAdapter = new ArrayAdapter<>(MainActivity.this,
+                        android.R.layout.simple_list_item_1, android.R.id.text1, modes);
+                modeListView.setAdapter(modeAdapter);
+                builder.setView(modeListView);
+                final Dialog dialog = builder.create();
+                dialog.show();
+                modeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        //editar aviso
+                        if (position == 0) {
+                            Toast.makeText(MainActivity.this, "editar "
+                                    + masterListPosition, Toast.LENGTH_SHORT).show();
+                            //borrar aviso
+                        } else {
+                            Toast.makeText(MainActivity.this, "borrar "
+                                    + masterListPosition, Toast.LENGTH_SHORT).show();
+                        }
+                        dialog.dismiss();
+                    }
+                });
+            }
+        });
+
     }
 
     @Override
