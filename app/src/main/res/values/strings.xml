@@ -2,4 +2,6 @@
     <string name="app_name">AppNotas</string>
     <string name="action_settings">Settings</string>
     <string name="aviso_text">Aviso text</string>
+    <string name="new_aviso">Nuevo aviso</string>
+    <string name="out">Salir</string>
 </resources>
