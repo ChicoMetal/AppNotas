@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,10 +17,16 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -32,6 +39,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ActionBar actionbar = getSupportActionBar();
+        actionbar.setHomeButtonEnabled(true);
+        actionbar.setDisplayShowHomeEnabled(true);
+        actionbar.setIcon(R.mipmap.ic_launcher);
         mListView = (ListView) findViewById(R.id.avisos_list_view);
         findViewById(R.id.avisos_list_view);
         mListView.setDivider(null);
@@ -93,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 ListView modeListView = new ListView(MainActivity.this);
                 String[] modes = new String[] { "Editar Aviso", "Borrar Aviso" };
-                ArrayAdapter<String> modeAdapter = new ArrayAdapter<>(MainActivity.this,
+                final ArrayAdapter<String> modeAdapter = new ArrayAdapter<>(MainActivity.this,
                         android.R.layout.simple_list_item_1, android.R.id.text1, modes);
                 modeListView.setAdapter(modeAdapter);
                 builder.setView(modeListView);
@@ -104,12 +115,13 @@ public class MainActivity extends AppCompatActivity {
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         //editar aviso
                         if (position == 0) {
-                            Toast.makeText(MainActivity.this, "editar "
-                                    + masterListPosition, Toast.LENGTH_SHORT).show();
+                            int nId = getIdFromPosition(masterListPosition);
+                            Aviso aviso = mDbdapter.fetchReminderById(nId);
+                            fireCustomDialog(aviso);
                             //borrar aviso
                         } else {
-                            Toast.makeText(MainActivity.this, "borrar "
-                                    + masterListPosition, Toast.LENGTH_SHORT).show();
+                            mDbdapter.deleteReminderById( getIdFromPosition(masterListPosition));
+                            mCursorAdapter.changeCursor(mDbdapter.fetchAllReminders());
                         }
                         dialog.dismiss();
                     }
@@ -164,6 +176,55 @@ public class MainActivity extends AppCompatActivity {
         return (int)mCursorAdapter.getItemId(nC);
     }
 
+    private void fireCustomDialog(final Aviso aviso){
+        // custom dialog
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_custom);
+
+        TextView titleView = (TextView) dialog.findViewById(R.id.custom_title);
+        final EditText editCustom = (EditText) dialog.findViewById(R.id.custom_edit_reminder);
+        Button commitButton = (Button) dialog.findViewById(R.id.custom_button_commit);
+        final CheckBox checkBox = (CheckBox) dialog.findViewById(R.id.custom_check_box);
+        LinearLayout rootLayout = (LinearLayout) dialog.findViewById(R.id.custom_root_layout);
+        final boolean isEditOperation = (aviso != null);
+
+        //esto es para un edit
+        if (isEditOperation){
+            titleView.setText("Editar Aviso");
+            checkBox.setChecked(aviso.getmImportant() == 1);
+            editCustom.setText(aviso.getmContent());
+            rootLayout.setBackgroundColor(getResources().getColor(R.color.azul_neutro));
+        }
+
+        commitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String reminderText = editCustom.getText().toString();
+                if (isEditOperation) {
+                    Aviso reminderEdited = new Aviso(aviso.getmId(),
+                            reminderText, checkBox.isChecked() ? 1 : 0);
+                    mDbdapter.updateReminder(reminderEdited);
+                    //esto es para nuevo aviso
+                } else {
+                    mDbdapter.createReminder(reminderText, checkBox.isChecked());
+                }
+                mCursorAdapter.changeCursor(mDbdapter.fetchAllReminders());
+                dialog.dismiss();
+            }
+        });
+
+        Button buttonCancel = (Button) dialog.findViewById(R.id.custom_button_cancel);
+        buttonCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -175,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()){
             case R.id.action_nuevo:
-                Log.d( getLocalClassName(),"Crear nuevo aviso" );
+                fireCustomDialog(null);
                 break;
             case R.id.action_salir:
                 finish();
