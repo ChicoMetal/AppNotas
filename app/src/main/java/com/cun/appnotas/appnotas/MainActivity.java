@@ -1,5 +1,6 @@
 package com.cun.appnotas.appnotas;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -14,19 +15,54 @@ import android.widget.ListView;
 
 public class MainActivity extends AppCompatActivity {
     private ListView mListView;
+    private AvisoDBAdapter mDbdapter;
+    private AvisosSimpleCursorAdapater mCursorAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mListView = (ListView) findViewById(R.id.avisos_list_view);
+        findViewById(R.id.avisos_list_view);
+        mListView.setDivider(null);
+        mDbdapter = new AvisoDBAdapter(this);
+        mDbdapter.Open();
 
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this,
-                                    R.layout.avisos_row,
-                                    R.id.row_text,
-                                    new String[]{"firt record", "second record", "third record"});
+        if( savedInstanceState == null ){
+            //limpiar todos los datos
+            mDbdapter.deleteAllReminder();
+            //Add algunos datos
+            mDbdapter.createReminder("Visitar el centro de Recogida",true);
+            mDbdapter.createReminder("Enviar los regalos prometidos",false);
+            mDbdapter.createReminder("Hacer la compra semanal",false);
+            mDbdapter.createReminder("Comprobar el correo",false);
 
-        mListView.setAdapter(arrayAdapter);
+        }
+
+        Cursor cursor = mDbdapter.fetchAllReminders();
+
+        //desde las columnas defnidas en la base de datos
+        String[] from = new String[]{
+                AvisoDBAdapter.COL_CONTENT
+        };
+
+        // la id de views en el layout
+        int[] to = new int[]{
+                R.id.row_text
+        };
+
+
+        mCursorAdapter = new AvisosSimpleCursorAdapater(
+                MainActivity.this,
+                R.layout.avisos_row,
+                cursor,
+                from,
+                to,
+                0
+        );
+
+
+        mListView.setAdapter(mCursorAdapter);
         /*
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

@@ -37,7 +37,7 @@ public class AvisoDBAdapter {
 
     //Declaracion de la creacion de la base de datos
     private static final String DATABASE_CREATE=
-            "CREATE TABLE if no exists "+ TABLE_NAME+ " ("+
+            "CREATE TABLE if not exists "+ TABLE_NAME+ " ("+
                     COL_ID + " INTEGER PRIMARY KEY autoincrement, "+
                     COL_CONTENT + " TEXT, "+
                     COL_IMPORTANT+ " INTEGER);";
